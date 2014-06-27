@@ -17,6 +17,18 @@ font-weight:bolder !important;
   padding: 5px;
   border: 1px solid #999;
 }
+#panel2 {
+  position: absolute;
+  width:200px;
+  top: 270px;
+  right: 140px;
+  margin-left: -180px;
+  z-index: 5;
+  background-color: #fff;
+  padding: 5px;
+  padding-top: 0.1px;
+  border: 1px solid #999;
+}
 #map_wrapper {
     overflow: hidden;
     position: relative;
