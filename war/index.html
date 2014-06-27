@@ -1,0 +1,276 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+    <title>Grower Map</title>
+    <script src="http://maps.google.com/maps/api/js?sensor=false" type="text/javascript"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+    <script src="http://google-maps-utility-library-v3.googlecode.com/svn/trunk/infobox/src/infobox.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>   
+    <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+    <script src="js/Station.js" type="text/javascript"></script>
+    <script src="js/MadisStation.js" type="text/javascript"></script>
+    <script src="js/FawnStation.js" type="text/javascript"></script>
+    <script src="js/GrowerStation.js" type="text/javascript"></script>
+    <script src="js/MarkerWithLabel.js"></script>
+    <script src="js/UserObz.js"></script>
+    <script src="js/MapShow.js"></script> 
+    <script src="js/angular.js"></script>  
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
+    <link rel="stylesheet" href="css/mapStyle.css">
+    <script src="js/highstock.js"></script>
+    <!-- Full Screen Google Map -->
+    <style type="text/css">
+        html {
+            height: 100%
+        }
+
+        body {
+            height: 100%;
+            margin: 0px;
+            padding: 0px
+        }
+
+        #map {
+            height: 100%
+        }
+        
+        #header{
+	        height: 125px;
+	        margin: 0;
+			background: #1e5799 url(image/heade_pattern.png) left top repeat-x;
+        }
+        
+        #header span{
+        	display: block;
+        	text-indent: -500em;
+	        width: 550px;
+	        height: 125px;
+	        background:transparent url(image/header_logo.png)left top no-repeat;
+        }
+    </style>
+</head>
+<body ng-app >
+<div id="header">
+	<span>
+		<h1>MY FLORIDA FARM WEATHER</h1>
+		<p>FLORIDA DEPARTMENT OF AGRICULTURE AND CONSUMER SERVICES
+		AND THE FLORIDA AUTOMATED WEATHER NETWORK</p>
+	</span>
+</div>
+<!-- RECOMMENDED if your web app will not function without JavaScript enabled -->
+<noscript>
+    <div style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color: white; border: 1px solid red; padding: 4px; font-family: sans-serif">
+        Your web browser must have JavaScript enabled
+        in order for this application to display correctly.
+    </div>
+</noscript>
+<!--[if lt IE 9]>
+
+<div class="ui-widget">
+    <div class="ui-state-highlight ui-corner-all">
+        <strong>Hey!</strong>
+        Looks like your browser is out of date. Why not update to the latest version? Click <a
+            href="http://windows.microsoft.com/en-US/windows-8/internet-explorer">Update</a>
+    </div>
+    </div>
+<![endif]-->
+
+<div id="map">
+</div>
+<div id="loading" style="z-index:99999;position:fixed;display:none;"><img src="image/loading.gif" width="60px" height="60px" /></div>
+<div ng-controller="MyCntrl" class="ng-scope">
+
+ <div id="panel"style="width:200px">
+      <input id="growerName"  type="text" placeholder="Enter Grower Name" style="width:180px;" ></br>
+      <select id="stationList">
+  <option value="">Station Name</option>
+</select></br>
+      <input type="button" value="Locate Station" onclick="codeAddress()">  
+    </div>
+  
+<div id="growerPopup" class="foo" title="Weather Graph" >
+<div>
+<div id="growerChoice" style="padding-top: 15px;float:left">
+<label>Grower:<label>
+<select
+   ng-model="grower" 
+   ng-options="g.label for g in growerOption"
+    ng-change="growerChange()">
+    <option>--</option>
+</select>
+</div>
+<div id="stationChoice" style="padding-top: 15px;padding-left: 15px;float:left;width=300px">
+<label>Station:<label>
+<select
+   ng-change="stationChange()"
+   ng-model="station" 
+   ng-options="s.label for s in stationOption"> 
+    <option>--</option>
+</select>
+</div>
+<div id="parameter" style="padding-top: 15px;padding-left: 25px;float:left;" >
+<label>Parameter:<label>
+<select
+   ng-change="parameterChange()"
+   ng-model="parameter" 
+   ng-options="p.label for p in parameters" >
+    <option>--</option>
+</select>
+</div>
+<div id="noDataError" style="padding-top: 20px;float:left" >
+</div>
+</div>
+<div id="container"  style="width:750px;height:500px;padding-top:40px;float:left;"></div>
+<div id="weatherInfo"  style="float:left;padding-top: 50px;padding-left: 30px;font-size:12px" >
+       <div id="fresh" ng-bind="fresh" style="width: 250px; word-break: normal;"></div>
+        <ul class="stations">
+        <li>
+          Station Name: <span ng-bind="stnName"></span>
+        </li></br>
+        <li>
+          Station ID: <span ng-bind="stnID"></span>
+        </li></br>
+        <li>
+          Lat: <span ng-bind="stnLat"></span>
+        </li></br>
+         <li>
+          Lng: <span ng-bind="stnLng"></span>
+        </li></br>
+         <li>
+          Wind Direction: <span ng-bind="windDirection"></span> &deg
+        </li></br>
+         <li>
+          Temperature: <span ng-bind="temperature"></span> &degF
+        </li></br>
+         <li>
+          Cumm Rain*: <span ng-bind="totalRain"></span> in
+        </li></br>
+         <li>
+          Wind Speed: <span ng-bind="windSpeed"></span> MPH
+        </li></br>
+          <li>
+          Rainfall: <span ng-bind="rain"></span> in
+        </li></br>
+          <li>
+          Wet Bulb Temp: <span ng-bind="webBulbTemp"></span> &degF
+        </li></br>
+          <li>
+          Humidity: <span ng-bind="humidity"></span> %
+        </li></br>
+         <li>
+          Date Time: <span ng-bind="dateTime"></span>
+        </li>        
+      </ul> 
+      <span ng-bind="legend"></span>
+      
+</div>
+</div>
+<div id="madisDialog" title="Madis Station" >
+    <ul class="stations" style="font-size:13px">
+        <li>
+          Station Name: <span ng-bind="mStnName"></span>
+        </li></br>
+        <li>
+          Station ID: <span ng-bind="mStnID"></span>
+        </li></br>
+        <li>
+          Lat: <span ng-bind="mStnLat"></span>
+        </li></br>
+         <li>
+          Lng: <span ng-bind="mStnLng"></span>
+        </li></br>
+         <li>
+          Elev: <span ng-bind="elev"></span> ft
+        </li></br>
+         <li>
+          Temperature: <span ng-bind="mTemperature"></span> &degF
+        </li></br>
+         <li>
+          Wind Speed: <span ng-bind="mWindSpeed"></span> MPH
+        </li></br>
+          <li>
+          Rainfall: <span ng-bind="mRain"></span> "
+        </li></br>
+         <li>
+          Date Time: <span ng-bind="mDateTime"></span>
+        </li>  
+            
+      </ul> 
+</div>
+<div id="userDialog" title="User Observation" >
+    <ul class="stations" style="font-size:13px">
+        <li>
+          Lat: <span ng-bind="userLat"></span>
+        </li></br>
+        <li>
+          Lon: <span ng-bind="userLon"></span>
+        </li></br>
+        <li>
+          Temperature Enter Date Time: <span ng-bind="enterTime"></span>
+        </li></br>
+        <li>
+          Temerature Expiration Date Time: <span ng-bind="expTime"></span>
+        </li></br>
+        <li>
+          Temperature: <span ng-bind="temperature"></span> &degF
+        </li></br>
+            
+      </ul> 
+</div>
+</div>
+
+
+<script>
+
+  $(function() {
+   
+    $( "#growerPopup" ).dialog({
+      autoOpen: false,
+      show: {
+        effect: "blind",
+        duration: 1000
+      },
+      width: 1100,
+       height: 700,
+      dialogClass: "foo",
+      hide: {
+        effect: "fade",
+        duration: 1000
+      }
+    });
+        $( "#madisDialog" ).dialog({
+      autoOpen: false,
+      show: {
+        effect: "blind",
+        duration: 1000
+      },
+      width: 400, 
+      height: 400,
+      hide: {
+        effect: "fade",
+        duration: 1000
+      }
+       });
+         $( "#userDialog" ).dialog({
+      autoOpen: false,
+      show: {
+        effect: "blind",
+        duration: 1000
+      },
+      width: 500, 
+      height: 240,
+      hide: {
+        effect: "fade",
+        duration: 1000
+      }
+       });
+       });
+</script>
+
+
+
+
+</body>
+</html>
