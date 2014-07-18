@@ -769,6 +769,7 @@ function MyCntrl($scope) {
 	}
 
 	function fillData(StnObjs) {
+		//join previous and current data together
 		previousData = previousData.concat(StnObjs);
 	}
 
@@ -812,6 +813,8 @@ function MyCntrl($scope) {
 		var time4 = new Date().getTime();
 		clearOverlays(markers);
 		var time5 = new Date().getTime();
+		
+//		console.log(noOverlapNewObjs);
 		markers = loadStnMarkers(noOverlapNewObjs);
 		var time6 = new Date().getTime();
 		preBound = bound;
@@ -833,6 +836,9 @@ function MyCntrl($scope) {
 		var image = 'image/marker.png';
 		var markers = [];
 		for ( var i = 0; i < stnObjs.length; i++) {
+			
+//			alert(stnObjs[i].getLabelContent());
+			
 			markers[i] = new MarkerWithLabel({
 				position : new google.maps.LatLng(stnObjs[i].lat,
 						stnObjs[i].lng),
@@ -886,6 +892,7 @@ function MyCntrl($scope) {
 
 			stnObjs[stnObjs.length] = Station.createStnObj(stations[i], tag);
 		}
+//		console.log(stnObjs);
 		var time2 = new Date().getTime();
 		// console.log("create: "+(time2-time1));
 		return stnObjs;
@@ -940,12 +947,30 @@ function MyCntrl($scope) {
 			if (stations[i].lat > bound.lowLat
 					&& stations[i].lat < bound.highLat
 					&& stations[i].lng > bound.lowLng
-					&& stations[i].lng < bound.highLng) {
-				eligiableStns[j] = stations[i];
-				j++;
-
+					&& stations[i].lng < bound.highLng
+					) {
+				// add check for stations: NA temperature, remove item
+				if(stations[i] instanceof GrowerStation) {
+					if(stations[i].fresh) {
+						eligiableStns[j] = stations[i];
+						j++;
+					}
+				}					
+				else if (stations[i] instanceof FawnStation) {
+					if(stations[i].temp2mF!='NA') {
+						eligiableStns[j] = stations[i];
+						j++;
+					}
+				}
+				else if (stations[i] instanceof MadisStation) {
+					if(stations[i].tempF!='NA') {
+						eligiableStns[j] = stations[i];
+						j++;
+					}
+				}
 			}
 		}
+//		console.log(eligiableStns);
 		return eligiableStns;
 	}
 
